@@ -1,0 +1,7 @@
+environment: "dev"
+
+# file_source:
+#   source_folder: "data/raw/"
+#   format: "json"
+#   encoding: "utf-8"
+#   target_folder: "data/processed/"

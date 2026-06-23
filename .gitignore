@@ -1,0 +1,19 @@
+# Entornos virtuales
+env/
+venv/
+.venv/
+
+# Variables de entorno
+.env
+.env.*
+
+# Archivos temporales
+__pycache__/
+*.py[cod]
+
+# VS Code
+.vscode/
+
+# Carpetas y archivos
+notebooks/
+*.log
