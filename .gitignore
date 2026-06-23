@@ -17,3 +17,6 @@ __pycache__/
 # Carpetas y archivos
 notebooks/
 *.log
+
+# Ignorar token de acceso a google drive
+google-application.json

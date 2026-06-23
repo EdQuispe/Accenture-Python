@@ -7,6 +7,7 @@ load_dotenv()
 
 FTP_USER = os.getenv('FTP_USER')
 FTP_PASSWORD = os.getenv('FTP_PASSWORD')
+GOOGLE_APPLICATION_CREDENTIALS = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
 
 with open('config/config.yaml', "r", encoding="utf-8") as file:
     config = yaml.safe_load(file)
@@ -25,5 +26,6 @@ carpeta_atenciones = local_folders["carpeta_atenciones"]
 carpeta_tickets = local_folders["carpeta_tickets"]
 carpeta_detalles = local_folders["carpeta_detalles"]
 
+drive_file_id = drive_file["file_id"]
 drive_file_url = drive_file["file_url"]
 drive_file_name = drive_file["file_name"]
