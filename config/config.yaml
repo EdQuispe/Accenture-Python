@@ -1,7 +1,12 @@
 environment: "dev"
 
-# file_source:
-#   source_folder: "data/raw/"
-#   format: "json"
-#   encoding: "utf-8"
-#   target_folder: "data/processed/"
+ftp-server:
+  host: 'bh8942.banahosting.com'
+  port: 21
+  folder_remoto_atenciones: 'accenture/atenciones'
+  folder_remoto_tickets: 'accenture/tickets'
+
+local-folders:
+  carpeta_atenciones: 'data/raw/atenciones'
+  carpeta_tickets: 'data/raw/tickets'
+  carpeta_detalles: 'data/raw/detalles'

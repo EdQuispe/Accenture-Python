@@ -1,4 +1,3 @@
-'''
 import os
 import yaml
 from dotenv import load_dotenv
@@ -6,12 +5,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-CLAVE = os.getenv('clave')
-
+FTP_USER = os.getenv('FTP_USER')
+FTP_PASSWORD = os.getenv('FTP_PASSWORD')
 
 with open('config/config.yaml', "r", encoding="utf-8") as file:
     config = yaml.safe_load(file)
 
 
-FILE_SOURCE = config['file_source']
-'''
+ftp_server = config["ftp-server"]
+local_folders = config["local-folders"]
+
+host = ftp_server["host"]
+port = ftp_server["port"]
+folder_remoto_atenciones = ftp_server["folder_remoto_atenciones"]
+folder_remoto_tickets = ftp_server["folder_remoto_tickets"]
+
+carpeta_atenciones = local_folders["carpeta_atenciones"]
+carpeta_tickets = local_folders["carpeta_tickets"]
+carpeta_detalles = local_folders["carpeta_detalles"]
