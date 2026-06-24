@@ -15,3 +15,7 @@ drive-file:
   file_id: '1kmATFQnnHygjzr_pOQ-uj12G2vd45M9cz2-05NgMQ6A'
   file_url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHio4-p3RASD9bcoDoUo3GBK98wPyqS3bXnLUq2-FoAaHD2zUgNwbnxUWc5GJuWI8LpIkJb-E6P590/pub?output=xlsx'
   file_name: 'Agencias.xlsx'
+
+tickets-files:
+  lima_file_name: "Lima.csv"
+  provincia_file_name: "Provincia.txt"

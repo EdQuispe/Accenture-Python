@@ -62,4 +62,95 @@ def clean_and_transform_atenciones(carpeta_local: str) -> tuple[pd.DataFrame, pd
                                 [['proveedor_id', 'proveedor']]
                     )
     
-    return df_atenciones, df_proveedor    
+    return df_atenciones, df_proveedor
+
+
+def after_delimiter(ubicacion: str, delimiter: str = '-'):
+    if pd.isna(ubicacion):
+        return pd.NA
+
+    ubicacion = str(ubicacion)
+    if delimiter not in ubicacion:
+        return pd.NA
+
+    valor = ubicacion.split(delimiter, 1)[1].strip()
+    return pd.to_numeric(valor, errors='coerce')
+
+
+def clean_and_transform_tickets(carpeta_local: str, lima_file_name: str, provincia_file_name: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    folder_path = Path(carpeta_local)
+
+    lima_path = folder_path / lima_file_name
+    provincia_path = folder_path / provincia_file_name
+
+    if not lima_path.exists():
+        raise FileNotFoundError(f'No se encontro el archivo: {lima_path}')
+
+    if not provincia_path.exists():
+        raise FileNotFoundError(f'No se encontro el archivo: {provincia_path}')
+    
+    df_lima = pd.read_csv(lima_path, sep=";", dtype='string')
+    df_lima['region'] = 'Lima'
+
+    df_provincia = pd.read_csv(provincia_path, sep='|', dtype='string')
+    df_provincia['region'] = 'Provincia'
+
+    df_lima.rename(columns={
+                    "Numero Ticket": "ticket_id", 
+                    "Item ID": "item_id", 
+                    "Item": "item",
+                    "Resumen": "resumen",
+                    "Ubicacion": "ubicacion",
+                    "Modo reporte": "modo_reporte",
+                    "Estado": "estado",
+                    "Fecha Creacion": "fecha_creacion",
+                    "Fecha Termino": "fecha_termino",
+                    "Fecha Cierre": "fecha_cierre",
+                    "Prioridad": "prioridad"}, 
+                    inplace=True)
+
+    df_provincia.rename(columns={
+                    "NumeroTicket": "ticket_id", 
+                    "ItemID": "item_id", 
+                    "Item": "item",
+                    "Resumen": "resumen",
+                    "Ubicacion": "ubicacion",
+                    "ModoReporte": "modo_reporte",
+                    "Estado": "estado",
+                    "FechaCreacion": "fecha_creacion",
+                    "FechaTermino": "fecha_termino",
+                    "FechaCierre": "fecha_cierre",
+                    "Prioridad": "prioridad"}, 
+                    inplace=True)
+    
+    df = pd.concat([df_lima, df_provincia], ignore_index=True)
+
+    df['ticket_id'] = df['ticket_id'].astype('string').str.strip().str.upper()
+    df['item_id'] = pd.to_numeric(df['item_id'].astype('string').str.strip().replace('', pd.NA), errors='coerce').astype('Int64')
+    df['item'] = df['item'].astype('string').str.strip()
+    df['agencia_id'] = df['ubicacion'].apply(after_delimiter).astype('Int64')
+    df['estado'] = df['estado'].astype('string').str.strip().mask(df['estado'] == 'Terminado', 'Cerrado')
+    df['fecha_creacion'] = pd.to_datetime(df['fecha_creacion'], format='%Y-%m-%d', errors='coerce')
+    df['fecha_termino'] = pd.to_datetime(df['fecha_termino'], format='%d-%m-%y', errors='coerce')
+    df['fecha_cierre'] = pd.to_datetime(df['fecha_cierre'], format='%d/%m/%Y', errors='coerce')
+    df['prioridad'] = pd.to_numeric(df['prioridad'].astype('string').str.strip().replace('', pd.NA), errors='coerce').astype('Int64')
+
+    df = (
+            df.sort_values(['ticket_id', 'fecha_termino', 'fecha_cierre'], ascending=[True, False, False])
+                   .drop_duplicates(subset=['ticket_id'])
+                   .reset_index(drop=True)
+                )
+
+    df_tickets = df[['ticket_id', 'item_id', 'agencia_id', 'estado', 'fecha_creacion', 'fecha_termino', 'fecha_cierre', 'prioridad', 'region']].copy()
+
+    df_item = df[['item_id', 'item', 'fecha_termino', 'fecha_cierre']].copy()
+
+    df_item = df_item[df_item["item_id"].notna()]
+
+    df_item = (
+                df_item.sort_values(['item_id', 'fecha_termino', 'fecha_cierre'], ascending=[True, False, False])
+                        .drop_duplicates(subset=['item_id'])
+                        [["item_id", "item"]]
+                )
+
+    return df_tickets, df_item
