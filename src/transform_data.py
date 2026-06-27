@@ -48,7 +48,7 @@ def clean_and_transform_atenciones(carpeta_local: str) -> tuple[pd.DataFrame, pd
     df['proveedor_id'] = pd.to_numeric(df['Proveedor Code'].astype('string').str.strip().replace('', pd.NA), errors='coerce').astype('Int64')
     df['proveedor'] = df['Proveedor'].astype('string').str.strip().str.upper()
     df["zona"] = df["file_name"].str.extract(r'_(.*?)\.json$')[0]
-    df["costo_atencion"] = df['Costo Atencion'].apply(obtener_monto)
+    df["costo_atencion"] = df['Costo Atencion'].apply(obtener_monto).astype('Float64').round(4)
 
     df_atenciones = df[['atencion_id', 'ticket_id', 'tipo_atencion', 'proveedor_id', 'proveedor', 'zona', 'costo_atencion']].copy()
 
@@ -128,6 +128,7 @@ def clean_and_transform_tickets(carpeta_local: str, lima_file_name: str, provinc
     df['ticket_id'] = df['ticket_id'].astype('string').str.strip().str.upper()
     df['item_id'] = pd.to_numeric(df['item_id'].astype('string').str.strip().replace('', pd.NA), errors='coerce').astype('Int64')
     df['item'] = df['item'].astype('string').str.strip()
+    df['region'] = df['region'].astype('string')
     df['agencia_id'] = df['ubicacion'].apply(after_delimiter).astype('Int64')
     df['estado'] = df['estado'].astype('string').str.strip().mask(df['estado'] == 'Terminado', 'Cerrado')
     df['fecha_creacion'] = pd.to_datetime(df['fecha_creacion'], format='%Y-%m-%d', errors='coerce')
@@ -188,3 +189,12 @@ def clean_and_transform_agencias(carpeta_local: str, nombre_archivo: str = 'Agen
     df_agencias['tipo_oficina'] = df_agencias['tipo_oficina'].str.strip()
     
     return df_agencias
+
+
+def join_transaccional_tables(df_tickets: pd.DataFrame, df_atenciones: pd.DataFrame) -> pd.DataFrame:
+    df_fact_atenciones = df_tickets.merge(df_atenciones, on="ticket_id", how="inner")
+
+    df_fact_atenciones = df_fact_atenciones[["atencion_id", "ticket_id", "agencia_id", "estado", "fecha_creacion", "fecha_termino", "fecha_cierre",
+                        "prioridad", "region", "tipo_atencion", "proveedor_id", "proveedor", "zona", "costo_atencion"]]
+
+    return df_fact_atenciones
