@@ -20,3 +20,8 @@ files:
   lima_file_name: "Lima.csv"
   provincia_file_name: "Provincia.txt"
   agencias_file_name: "Agencias.xlsx"
+
+sql_server:
+  driver: "ODBC Driver 17 for SQL Server"
+  server: "DESKTOP-8U804TB"
+  database: "Accenture"

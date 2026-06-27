@@ -47,10 +47,10 @@ def clean_and_transform_atenciones(carpeta_local: str) -> tuple[pd.DataFrame, pd
     df['tipo_atencion'] = df['Tipo Atencion'].astype('string').str.strip()
     df['proveedor_id'] = pd.to_numeric(df['Proveedor Code'].astype('string').str.strip().replace('', pd.NA), errors='coerce').astype('Int64')
     df['proveedor'] = df['Proveedor'].astype('string').str.strip().str.upper()
-    df["zona"] = df["file_name"].str.extract(r'_(.*?)\.json$')[0]
+    df["zona"] = df["file_name"].str.extract(r'_(.*?)\.json$')[0].astype('string')
     df["costo_atencion"] = df['Costo Atencion'].apply(obtener_monto).astype('Float64').round(4)
 
-    df_atenciones = df[['atencion_id', 'ticket_id', 'tipo_atencion', 'proveedor_id', 'proveedor', 'zona', 'costo_atencion']].copy()
+    df_atenciones = df[['atencion_id', 'ticket_id', 'tipo_atencion', 'proveedor_id', 'zona', 'costo_atencion']].copy()
 
     df_proveedor = df[["atencion_id", "proveedor_id", "proveedor"]].copy()
 
@@ -195,6 +195,6 @@ def join_transaccional_tables(df_tickets: pd.DataFrame, df_atenciones: pd.DataFr
     df_fact_atenciones = df_tickets.merge(df_atenciones, on="ticket_id", how="inner")
 
     df_fact_atenciones = df_fact_atenciones[["atencion_id", "ticket_id", "agencia_id", "estado", "fecha_creacion", "fecha_termino", "fecha_cierre",
-                        "prioridad", "region", "tipo_atencion", "proveedor_id", "proveedor", "zona", "costo_atencion"]]
+                        "prioridad", "region", "tipo_atencion", "proveedor_id", "zona", "costo_atencion"]]
 
     return df_fact_atenciones

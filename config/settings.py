@@ -8,6 +8,9 @@ load_dotenv()
 FTP_USER = os.getenv('FTP_USER')
 FTP_PASSWORD = os.getenv('FTP_PASSWORD')
 GOOGLE_APPLICATION_CREDENTIALS = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+USER_DB = os.getenv('USER_DB')
+PASSWORD_DB = os.getenv('PASSWORD_DB')
+
 
 with open('config/config.yaml', "r", encoding="utf-8") as file:
     config = yaml.safe_load(file)
@@ -17,6 +20,7 @@ ftp_server = config["ftp-server"]
 local_folders = config["local-folders"]
 drive_file = config["drive-file"]
 files = config["files"]
+SQL_SERVER = config["sql_server"]
 
 
 host = ftp_server["host"]
