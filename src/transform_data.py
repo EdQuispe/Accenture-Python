@@ -154,3 +154,37 @@ def clean_and_transform_tickets(carpeta_local: str, lima_file_name: str, provinc
                 )
 
     return df_tickets, df_item
+
+
+def clean_and_transform_agencias(carpeta_local: str, nombre_archivo: str = 'Agencias.xlsx') -> pd.DataFrame:
+    folder_path = Path(carpeta_local)
+    ruta_archivo = folder_path / nombre_archivo
+
+    if not ruta_archivo.exists():
+        raise FileNotFoundError(f'No se encontro el archivo: {ruta_archivo}')
+
+    df_agencias = pd.read_excel(ruta_archivo, dtype='string')
+    
+    df_agencias.rename(columns={
+        'AgenciaID': 'agencia_id',
+        'Agencia': 'agencia',
+        'Region': 'region',
+        'Direccion': 'direccion',
+        'Distrito': 'distrito',
+        'Provincia': 'provincia',
+        'Departamento': 'departamento',
+        'Tipo Oficina': 'tipo_oficina'
+    }, inplace=True)
+
+    df_agencias = df_agencias[["agencia_id", "agencia", "region", "direccion", "distrito", "provincia", "departamento", "tipo_oficina"]]
+
+    df_agencias['agencia_id'] = pd.to_numeric(df_agencias['agencia_id'].str.strip().replace('', pd.NA), errors='coerce').astype('Int64')
+    df_agencias['agencia'] = df_agencias['agencia'].str.strip().str.upper()
+    df_agencias['region'] = df_agencias['region'].str.strip()
+    df_agencias['direccion'] = df_agencias['direccion'].str.strip().str.lower()
+    df_agencias['distrito'] = df_agencias['distrito'].str.strip()
+    df_agencias['provincia'] = df_agencias['provincia'].str.strip()
+    df_agencias['departamento'] = df_agencias['departamento'].str.strip()
+    df_agencias['tipo_oficina'] = df_agencias['tipo_oficina'].str.strip()
+    
+    return df_agencias

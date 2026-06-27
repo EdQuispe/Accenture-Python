@@ -16,7 +16,7 @@ with open('config/config.yaml', "r", encoding="utf-8") as file:
 ftp_server = config["ftp-server"]
 local_folders = config["local-folders"]
 drive_file = config["drive-file"]
-tickets_files = config["tickets-files"]
+files = config["files"]
 
 
 host = ftp_server["host"]
@@ -32,5 +32,6 @@ drive_file_id = drive_file["file_id"]
 drive_file_url = drive_file["file_url"]
 drive_file_name = drive_file["file_name"]
 
-lima_file_name = tickets_files['lima_file_name']
-provincia_file_name = tickets_files['provincia_file_name']
+lima_file_name = files['lima_file_name']
+provincia_file_name = files['provincia_file_name']
+agencias_file_name = files['agencias_file_name']

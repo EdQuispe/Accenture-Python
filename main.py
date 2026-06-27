@@ -1,6 +1,6 @@
 from config.settings import *
 from src.extract_data import importar_archivos_ftp, importar_archivo_excel_drive_privado
-from src.transform_data import clean_and_transform_atenciones, clean_and_transform_tickets
+from src.transform_data import clean_and_transform_atenciones, clean_and_transform_tickets, clean_and_transform_agencias
 
 
 
@@ -12,6 +12,8 @@ def main():
     df_atenciones, df_proveedor = clean_and_transform_atenciones(carpeta_atenciones)
 
     df_tickets, df_item = clean_and_transform_tickets(carpeta_tickets, lima_file_name, provincia_file_name)
+
+    df_agencias = clean_and_transform_agencias(carpeta_detalles, agencias_file_name)
 
 
 if __name__ == "__main__":
