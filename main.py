@@ -2,7 +2,8 @@ from config.settings import *
 from src.extract_data import importar_archivos_ftp, importar_archivo_excel_drive_privado
 from src.transform_data import clean_and_transform_atenciones, clean_and_transform_tickets, clean_and_transform_agencias, join_transaccional_tables
 from src.database import get_sql_server_engine
-from src.load_data import truncate_and_insert_to_table
+from src.load_data import historical_or_incremental_table
+from datetime import datetime
 
 
 def main():
@@ -15,12 +16,15 @@ def main():
     df_agencias = clean_and_transform_agencias(carpeta_detalles, agencias_file_name)
     df_fact_atenciones = join_transaccional_tables(df_tickets, df_atenciones)
 
-    engine = get_sql_server_engine(SQL_SERVER, USER_DB, PASSWORD_DB )
+    fecha_str = "30/10/2025"
+    fecha = datetime.strptime(fecha_str, "%d/%m/%Y").date()
 
-    truncate_and_insert_to_table(df_proveedor, engine, "datamart", "dim_proveedor")
-    truncate_and_insert_to_table(df_item, engine, "datamart", "dim_item")
-    truncate_and_insert_to_table(df_agencias, engine, "datamart", "dim_agencia")
-    truncate_and_insert_to_table(df_fact_atenciones, engine, "datamart", "fact_atenciones")
+    engine = get_sql_server_engine(SQL_SERVER, USER_DB, PASSWORD_DB)
+
+    historical_or_incremental_table("Incremental", df_proveedor, engine, "datamart", "dim_proveedor", "proveedor_id")
+    historical_or_incremental_table("Incremental", df_item, engine, "datamart", "dim_item", "item_id")
+    historical_or_incremental_table("Incremental", df_agencias, engine, "datamart", "dim_agencia", "agencia_id")
+    historical_or_incremental_table("Incremental", df_fact_atenciones, engine, "datamart", "fact_atenciones", "atencion_id", fecha)
 
 if __name__ == "__main__":
     main()
