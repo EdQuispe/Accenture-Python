@@ -4,9 +4,13 @@ from src.transform_data import clean_and_transform_atenciones, clean_and_transfo
 from src.database import get_sql_server_engine
 from src.load_data import historical_or_incremental_table
 from datetime import datetime
+from config.logging import setup_logging
 
 
 def main():
+
+    setup_logging()
+
     importar_archivos_ftp(host, port, FTP_USER, FTP_PASSWORD, folder_remoto_atenciones, carpeta_atenciones)
     importar_archivos_ftp(host, port, FTP_USER, FTP_PASSWORD, folder_remoto_tickets, carpeta_tickets)
     importar_archivo_excel_drive_privado(drive_file_id, carpeta_detalles, GOOGLE_APPLICATION_CREDENTIALS, drive_file_name)

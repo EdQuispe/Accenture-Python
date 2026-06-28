@@ -2,14 +2,16 @@ import pandas as pd
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
 from datetime import date, datetime
+import logging
 
+logger = logging.getLogger(__name__)
 
 def truncate_and_insert_to_table(df: pd.DataFrame, engine: Engine, schema: str, table: str) -> None:
     try:
 
         df['fecha_actualizacion'] = pd.Timestamp.now()
 
-        print(f"Se inició la carga del dataframe a la tabla {schema}.{table}")
+        logger.info(f"Se inició la carga del dataframe a la tabla {schema}.{table}. Total filas a procesar: {len(df)}")
 
         nombre_tabla = f"{schema}.{table}"
 
@@ -19,10 +21,10 @@ def truncate_and_insert_to_table(df: pd.DataFrame, engine: Engine, schema: str, 
         df.to_sql(name = table, con = engine, schema = schema, if_exists="append", index=False)
         
         filas = len(df)
-        print(f"Se cargaron los datos a la tabla {schema}.{table}. Registros Cargados: {filas}")
+        logger.info(f"Se cargaron los datos a la tabla {schema}.{table}. Registros Cargados: {filas}")
 
-    except Exception as e:
-        print(f"Error durante la carga de datos a la tabla {schema}.{table}.\nDetalle del error: {e}")
+    except Exception:
+        logger.exception(f"Error durante la carga de datos a la tabla {schema}.{table}.")
         raise
 
 
@@ -34,7 +36,8 @@ def incremental_upsert_table(df: pd.DataFrame, engine: Engine, schema: str, tabl
 
     try:
         if merge_column not in df.columns:
-            raise KeyError(f"No existe la columna de upsert '{merge_column}' en el dataframe.")
+            logger.error(f"No existe la columna de upsert '{merge_column}' en el dataframe.")
+            raise
 
         df["fecha_actualizacion"] = pd.Timestamp.now()
 
@@ -62,8 +65,10 @@ def incremental_upsert_table(df: pd.DataFrame, engine: Engine, schema: str, tabl
 
             connection.execute(merge_sql)
 
+            logger.info(f"Se ha realizado la carga incremental sobre la tabla {nombre_tabla}. Total registros procesados: {len(df)}")
+
     except Exception:
-        print(f"Error durante la carga incremental de datos a la tabla {schema}.{table}")
+        logger.exception(f"Error durante la carga incremental de datos a la tabla {schema}.{table}")
         raise
     finally:
         with engine.begin() as connection:
@@ -89,11 +94,8 @@ def historical_or_incremental_table(tipo_carga: str, df: pd.DataFrame, engine: E
         truncate_and_insert_to_table(df, engine, schema, table)
     else:
         if fecha_actual is not None:
-            print(f"Total Registros del dataframe: ", len(df))
+            logger.info(f"El dataframe df_fact_atenciones, antes del filtrado, cuenta con un total de {len(df)} registros")
             fecha_inicio, fecha_fin = get_month_window(fecha_actual)
             df = df[df["fecha_creacion"].between(fecha_inicio, fecha_fin, inclusive="both")]
             
         incremental_upsert_table(df, engine, schema, table, merge_column)
-
-    filas = len(df)
-    print(f"Se cargaron los datos a la tabla {schema}.{table}. Registros procesados: {filas}")

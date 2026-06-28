@@ -1,5 +1,8 @@
 import urllib
 from sqlalchemy import create_engine
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_sql_server_engine(sql_server: dict, user: str, password: str):
@@ -25,9 +28,10 @@ def get_sql_server_engine(sql_server: dict, user: str, password: str):
             fast_executemany=True
         )
 
-        print(f"Se ha establecido de manera exitosa la conexión al servidor {server}")
+        logger.info(f"Se ha establecido de manera exitosa la conexión al servidor {server}")
+        
     except Exception as e:
-        print(f"No se ha podido establecer la conexión al servidor {server}. \nDetalle del error: {e}")
+        logger.exception(f"No se ha podido establecer la conexión al servidor {server}.")
         raise
 
     return engine

@@ -1,5 +1,8 @@
 from pathlib import Path
 import pandas as pd
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def obtener_monto(costo_atencion: str):
@@ -22,7 +25,8 @@ def clean_and_transform_atenciones(carpeta_local: str) -> tuple[pd.DataFrame, pd
     archivos = list(folder_path.glob('*.json'))
 
     if not archivos:
-        raise FileNotFoundError(f'No se encontraron archivos JSON en: {folder_path}')
+        logger.error(f'No se encontraron archivos JSON en la carpeta: {folder_path}')
+        raise
 
     columnas = [
         'Atencion ID',
@@ -34,6 +38,9 @@ def clean_and_transform_atenciones(carpeta_local: str) -> tuple[pd.DataFrame, pd
     ]
 
     lista_dfs = []
+
+    logger.info(f'Iniciando con el proceso de extracción de datos de los archivos JSON de la carpeta: {folder_path}')
+
     for archivo in archivos:
         df = pd.read_json(archivo)
         df = df[columnas]
@@ -41,6 +48,8 @@ def clean_and_transform_atenciones(carpeta_local: str) -> tuple[pd.DataFrame, pd
         lista_dfs.append(df)
 
     df = pd.concat(lista_dfs, ignore_index=True)
+
+    logger.info(f'Total registros leídos de la base de atenciones: {len(df)}')
 
     df['atencion_id'] = pd.to_numeric(df['Atencion ID'], errors='coerce').astype('Int64')
     df['ticket_id'] = df['Numero Ticket'].astype('string').str.strip().str.upper()
@@ -51,6 +60,8 @@ def clean_and_transform_atenciones(carpeta_local: str) -> tuple[pd.DataFrame, pd
     df["costo_atencion"] = df['Costo Atencion'].apply(obtener_monto).astype('Float64').round(4)
 
     df_atenciones = df[['atencion_id', 'ticket_id', 'tipo_atencion', 'proveedor_id', 'zona', 'costo_atencion']].copy()
+    logger.info(f"Se han disponibilizado en el dataframe df_atenciones un total de {len(df_atenciones)} registros")
+
 
     df_proveedor = df[["atencion_id", "proveedor_id", "proveedor"]].copy()
 
@@ -62,6 +73,8 @@ def clean_and_transform_atenciones(carpeta_local: str) -> tuple[pd.DataFrame, pd
                                 [['proveedor_id', 'proveedor']]
                     )
     
+    logger.info(f"Se han disponibilizado en el dataframe df_proveedor un total de {len(df_proveedor)} registros")
+
     return df_atenciones, df_proveedor
 
 
@@ -84,10 +97,14 @@ def clean_and_transform_tickets(carpeta_local: str, lima_file_name: str, provinc
     provincia_path = folder_path / provincia_file_name
 
     if not lima_path.exists():
-        raise FileNotFoundError(f'No se encontro el archivo: {lima_path}')
+        logger.error(f'No se encontro el archivo: {lima_path}')
+        raise
 
     if not provincia_path.exists():
-        raise FileNotFoundError(f'No se encontro el archivo: {provincia_path}')
+        logger.error(f'No se encontro el archivo: {provincia_path}')
+        raise
+    
+    logger.info(f'Iniciando con el proceso de extracción de datos de los archivos {lima_file_name} y {provincia_file_name}')
     
     df_lima = pd.read_csv(lima_path, sep=";", dtype='string')
     df_lima['region'] = 'Lima'
@@ -124,6 +141,7 @@ def clean_and_transform_tickets(carpeta_local: str, lima_file_name: str, provinc
                     inplace=True)
     
     df = pd.concat([df_lima, df_provincia], ignore_index=True)
+    logger.info(f'Total registros leídos de la base de tickets: {len(df)}')
 
     df['ticket_id'] = df['ticket_id'].astype('string').str.strip().str.upper()
     df['item_id'] = pd.to_numeric(df['item_id'].astype('string').str.strip().replace('', pd.NA), errors='coerce').astype('Int64')
@@ -143,6 +161,7 @@ def clean_and_transform_tickets(carpeta_local: str, lima_file_name: str, provinc
                 )
 
     df_tickets = df[['ticket_id', 'item_id', 'agencia_id', 'estado', 'fecha_creacion', 'fecha_termino', 'fecha_cierre', 'prioridad', 'region']].copy()
+    logger.info(f"Se han disponibilizado en el dataframe df_tickets un total de {len(df_tickets)} registros")
 
     df_item = df[['item_id', 'item', 'fecha_termino', 'fecha_cierre']].copy()
 
@@ -154,6 +173,8 @@ def clean_and_transform_tickets(carpeta_local: str, lima_file_name: str, provinc
                         [["item_id", "item"]]
                 )
 
+    logger.info(f"Se han disponibilizado en el dataframe df_item un total de {len(df_item)} registros")
+
     return df_tickets, df_item
 
 
@@ -162,9 +183,14 @@ def clean_and_transform_agencias(carpeta_local: str, nombre_archivo: str = 'Agen
     ruta_archivo = folder_path / nombre_archivo
 
     if not ruta_archivo.exists():
-        raise FileNotFoundError(f'No se encontro el archivo: {ruta_archivo}')
+        logger.error(f"No se encontró el archivo: {ruta_archivo}")
+        raise
+
+    logger.info(f"Se inició con la extracción de datos del archivo {ruta_archivo}")
 
     df_agencias = pd.read_excel(ruta_archivo, dtype='string')
+
+    logger.info(f"Iniciando con la limpieza y transformación de datos del dataframe df_agencias. Total Registros leídos: {len(df_agencias)}")
     
     df_agencias.rename(columns={
         'AgenciaID': 'agencia_id',
@@ -188,13 +214,18 @@ def clean_and_transform_agencias(carpeta_local: str, nombre_archivo: str = 'Agen
     df_agencias['departamento'] = df_agencias['departamento'].str.strip()
     df_agencias['tipo_oficina'] = df_agencias['tipo_oficina'].str.strip()
     
+    logger.info(f"Se han disponibilizado en el dataframe df_agencias un total de {len(df_agencias)} registros")
+
     return df_agencias
 
 
 def join_transaccional_tables(df_tickets: pd.DataFrame, df_atenciones: pd.DataFrame) -> pd.DataFrame:
+
     df_fact_atenciones = df_tickets.merge(df_atenciones, on="ticket_id", how="inner")
 
     df_fact_atenciones = df_fact_atenciones[["atencion_id", "ticket_id", "agencia_id", "estado", "fecha_creacion", "fecha_termino", "fecha_cierre",
                         "prioridad", "region", "tipo_atencion", "proveedor_id", "zona", "costo_atencion"]]
+    
+    logger.info(f"Se han disponibilizado en el dataframe df_fact_atenciones un total de {len(df_fact_atenciones)} registros")
 
     return df_fact_atenciones
